@@ -17,6 +17,7 @@
 #include "m2n/BoundM2N.hpp"
 #include "m2n/config/M2NConfiguration.hpp"
 #include "precice/Participant.hpp"
+#include "precice/impl/DVFSController.hpp"
 #include "precice/impl/DataContext.hpp"
 #include "precice/impl/SharedPointer.hpp"
 #include "precice/impl/SolverImbalance.hpp"
@@ -314,6 +315,7 @@ private:
   mutable logging::Logger _log{"impl::ParticipantImpl"};
 
   std::string _accessorName;
+  std::string _outerRegionName;
 
   int _accessorProcessRank;
 
@@ -337,6 +339,7 @@ private:
   cplscheme::PtrCouplingScheme _couplingScheme;
 
   std::shared_ptr<SolverImbalance> _solverImbalance;
+  std::unique_ptr<DVFSController>  _dvfsController;
 
   /// Represents the various states a Participant can be in.
   enum struct State {

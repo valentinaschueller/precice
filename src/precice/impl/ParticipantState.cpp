@@ -256,6 +256,16 @@ bool ParticipantState::isDirectAccessAllowed(std::string_view mesh) const
   return false;
 }
 
+bool ParticipantState::isDvfsEnabled() const
+{
+  return _withDvfs;
+}
+
+void ParticipantState::setDvfs(bool withDvfs)
+{
+  _withDvfs = withDvfs;
+}
+
 ReceivedMeshContext &ParticipantState::receivedMeshContext(std::string_view mesh)
 {
   auto it = std::find_if(_receivedMeshContexts.begin(), _receivedMeshContexts.end(),

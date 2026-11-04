@@ -254,6 +254,10 @@ public:
   /// which requires the config tag <receive-mesh ... direct-access="true"
   bool isDirectAccessAllowed(std::string_view mesh) const;
 
+  /// Is DVFS enabled for this participant?
+  bool isDvfsEnabled() const;
+  void setDvfs(bool withDvfs);
+
   /** Provides access to a ReceivedMeshContext given the mesh name.
    * @param[in] mesh the name of the mesh
    * @return a reference to the ReceivedMeshContext
@@ -418,6 +422,8 @@ private:
   DataMap<ReadDataContext> _readDataContexts;
 
   bool _useIntraComm = false;
+
+  bool _withDvfs;
 
   template <typename ELEMENT_T>
   bool isDataValid(

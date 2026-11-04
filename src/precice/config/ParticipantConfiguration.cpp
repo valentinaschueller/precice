@@ -63,6 +63,9 @@ ParticipantConfiguration::ParticipantConfiguration(
                           "of the precice::Participant object used by the participant.");
   tag.addAttribute(attrName);
 
+  auto attrDvfsEnabled = makeXMLAttribute("dvfs", false).setDocumentation("Enables DVFS for this participant.");
+  tag.addAttribute(attrDvfsEnabled);
+
   XMLTag tagWriteData(*this, TAG_WRITE, XMLTag::OCCUR_ARBITRARY);
   doc = "Sets data to be written by the participant to preCICE. ";
   doc += "Data is defined by using the <data> tag.";
@@ -113,11 +116,11 @@ ParticipantConfiguration::ParticipantConfiguration(
   tagWatchPoint.addAttribute(attrCoordinate);
   tag.addSubtag(tagWatchPoint);
 
-  auto attrScaleWitConn = XMLAttribute<bool>(ATTR_SCALE_WITH_CONN)
-                              .setDocumentation("Whether the vertex data is scaled with the element area before "
-                                                "summing up or not. In 2D, vertex data is scaled with the average length of "
-                                                "neighboring edges. In 3D, vertex data is scaled with the average surface of "
-                                                "neighboring triangles. If false, vertex data is directly summed up.");
+  auto   attrScaleWitConn = XMLAttribute<bool>(ATTR_SCALE_WITH_CONN)
+                                .setDocumentation("Whether the vertex data is scaled with the element area before "
+                                                  "summing up or not. In 2D, vertex data is scaled with the average length of "
+                                                  "neighboring edges. In 3D, vertex data is scaled with the average surface of "
+                                                  "neighboring triangles. If false, vertex data is directly summed up.");
   XMLTag tagWatchIntegral(*this, TAG_WATCH_INTEGRAL, XMLTag::OCCUR_ARBITRARY);
   doc = "A watch integral can be used to follow the transient change of integral data ";
   doc += "and surface area for a given coupling mesh.";
@@ -261,6 +264,7 @@ void ParticipantConfiguration::xmlTagCallback(
   if (tag.getName() == TAG) {
     const std::string   &name = tag.getStringAttributeValue(ATTR_NAME);
     impl::PtrParticipant p(new impl::ParticipantState(name, _meshConfig));
+    p->setDvfs(tag.getBooleanAttributeValue("dvfs"));
     _participants.push_back(p);
   } else if (tag.getName() == TAG_PROVIDE_MESH) {
     std::string name = tag.getStringAttributeValue(ATTR_NAME);

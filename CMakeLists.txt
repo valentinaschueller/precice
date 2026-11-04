@@ -72,6 +72,7 @@ option(PRECICE_BUILD_TOOLS "Build the \"precice-tools\" executable" ON)
 option(PRECICE_BUILD_UNITY "Use unity builds in preCICE" ON)
 option(PRECICE_FEATURE_LIBBACKTRACE_STACKTRACES "Enable libbacktrace for stacktrace generation." OFF)
 option(PRECICE_BUILD_BENCHMARKS "Build the preCICE-internal benchmarks" OFF)
+option(PRECICE_FEATURE_DVFS "Enable dynamic load balancing with DVFS" OFF)
 
 option(CMAKE_INTERPROCEDURAL_OPTIMIZATION "Enable interprocedural optimization for all targets." OFF)
 
@@ -375,6 +376,17 @@ if (PRECICE_FEATURE_PROFILING_COMPRESSION)
   message(STATUS "Found LZMA ${LIBLZMA_VERSION_STRING}")
 endif()
 
+# Option: PRECICE_FEATURE_DVFS
+if (PRECICE_FEATURE_DVFS)
+  include_directories(${CMAKE_PREFIX_PATH}/include)
+
+  find_library(
+      MERICMPI
+      NAMES mericmpi
+      REQUIRED
+  )
+endif()
+
 #
 # Setup miscellaneous features
 #
@@ -566,6 +578,11 @@ endif()
 if (PRECICE_FEATURE_PROFILING_COMPRESSION)
   target_link_libraries(preciceCore PUBLIC LibLZMA::LibLZMA)
   target_compile_definitions(preciceCore PUBLIC PRECICE_COMPRESSION)
+endif()
+
+if (PRECICE_FEATURE_DVFS)
+  target_link_libraries(preciceCore PUBLIC ${MERICMPI})
+  target_compile_definitions(preciceCore PUBLIC PRECICE_DVFS)
 endif()
 
 # Includes configuration for the core

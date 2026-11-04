@@ -265,6 +265,8 @@ target_sources(preciceCore
     src/precice/impl/CommonErrorMessages.hpp
     src/precice/impl/DataContext.cpp
     src/precice/impl/DataContext.hpp
+    src/precice/impl/DVFSController.cpp
+    src/precice/impl/DVFSController.hpp
     src/precice/impl/MappingContext.hpp
     src/precice/impl/MeshContext.hpp
     src/precice/impl/ParticipantImpl.cpp

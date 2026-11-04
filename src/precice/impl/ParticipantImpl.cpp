@@ -77,6 +77,10 @@
 #include "utils/assertion.hpp"
 #include "xml/XMLTag.hpp"
 
+#ifdef PRECICE_DVFS
+#include <meric.h>
+#endif
+
 using precice::profiling::Event;
 
 namespace precice::impl {
@@ -229,6 +233,14 @@ void ParticipantImpl::configure(
   _couplingScheme = config.getCouplingSchemeConfiguration()->getCouplingScheme(_accessorName);
 
   _solverImbalance = std::make_shared<SolverImbalance>();
+#ifdef PRECICE_DVFS
+  MERIC_Init();
+  _outerRegionName = _accessorName + std::string("_outer");
+  MERIC_MeasureStart(_outerRegionName.c_str());
+  if (_accessorProcessRank == 0) {
+    _dvfsController = std::make_unique<DVFSController>(_accessorName, _accessor->isDvfsEnabled());
+  }
+#endif
 
   PRECICE_ASSERT(_accessorCommunicatorSize == 1 || _accessor->useIntraComm(),
                  "A parallel participant needs an intra-participant communication");
@@ -298,6 +310,9 @@ void ParticipantImpl::initialize()
 
   _state = State::Initialized;
   PRECICE_INFO(_couplingScheme->printCouplingState());
+#ifdef PRECICE_DVFS
+  MERIC_MeasureStart(_accessorName.c_str());
+#endif
   _solverAdvanceEvent = std::make_unique<profiling::Event>("solver.advance", profiling::Fundamental, profiling::Synchronize);
   _solverImbalance->startSolver();
 }
@@ -403,6 +418,9 @@ void ParticipantImpl::advance(
 
   // Events for the solver time, stopped when we enter, restarted when we leave advance
   PRECICE_ASSERT(_solverAdvanceEvent, "The advance event is created in initialize");
+#ifdef PRECICE_DVFS
+  MERIC_MeasureStop(_accessorName.c_str());
+#endif
   _solverAdvanceEvent->stop();
   _solverImbalance->stopSolver(computedTimeStepSize);
 
@@ -467,8 +485,8 @@ void ParticipantImpl::advance(
 
   e.stop();
   if (isAtWindowEnd) {
-    double timeToAdvance = _solverImbalance->getSolverTimeToAdvance();
-    double              receiveValue = 0.0;
+    double              timeToAdvance = _solverImbalance->getSolverTimeToAdvance();
+    double              receiveValue  = 0.0;
     std::vector<double> timesToAdvance;
     timesToAdvance.reserve(_m2ns.size() + 1);
     timesToAdvance.push_back(timeToAdvance);
@@ -486,8 +504,16 @@ void ParticipantImpl::advance(
     }
     _solverImbalance->computeSolverImbalance(timesToAdvance);
     _solverImbalance->reset();
+#ifdef PRECICE_DVFS
+    if (_accessorProcessRank == 0) {
+      _dvfsController->adjustResources(_solverImbalance->getImbalanceFactor());
+    }
+#endif
   }
   _solverImbalance->startSolver();
+#ifdef PRECICE_DVFS
+  MERIC_MeasureStart(_accessorName.c_str());
+#endif
   _solverAdvanceEvent->start();
 }
 
@@ -622,6 +648,11 @@ void ParticipantImpl::trimSendDataAfter(double time)
 
 void ParticipantImpl::finalize()
 {
+#ifdef PRECICE_DVFS
+  MERIC_MeasureStop(_accessorName.c_str());
+  MERIC_MeasureStop(_outerRegionName.c_str());
+  MERIC_Close();
+#endif
   PRECICE_TRACE();
   PRECICE_CHECK(_state != State::Finalized, "finalize() may only be called once.");
 
