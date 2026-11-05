@@ -1,5 +1,6 @@
 #include "precice/impl/DVFSController.hpp"
 #include <bits/stdc++.h>
+#include <algorithm>
 #include <iostream>
 #include <iterator>
 #include "../thirdparty/simple-web-server/client_http.hpp"
@@ -47,6 +48,7 @@ DVFSController::DVFSController(std::string_view participantName, bool withDvfs)
     _frequencies.push_back(stoul(token));
   }
   PRECICE_ASSERT(!_frequencies.empty());
+  std::sort(_frequencies.begin(), _frequencies.end());
 
   currentFrequency = _frequencies.back();
 
