@@ -27,15 +27,22 @@ DVFSController::DVFSController(std::string_view participantName, bool withDvfs)
 
   _regionName = participantName;
 
-  _port   = getEnvVar("MERIC_ONLINE");
-  _client = std::make_unique<HttpClient>(std::string("localhost:") + _port);
+  _port             = getEnvVar("MERIC_ONLINE");
+  std::string nodes = getEnvVar("MERIC_ONLINE_IP");
 
-  auto        response         = _client->request("GET", "/get_available_cf");
+  std::stringstream ss(nodes);
+  std::string       token;
+
+  while (getline(ss, token, ' ')) {
+    _clients.push_back(std::make_unique<HttpClient>(token + ":" + _port));
+    PRECICE_INFO("IP Address: {}", token);
+  }
+
+  auto        response         = _clients.front()->request("GET", "/get_available_cf");
   std::string frequency_string = response->content.string();
   PRECICE_INFO("frequencies: {}", frequency_string);
   frequency_string = frequency_string.substr(1, frequency_string.size() - 2);
-  std::stringstream ss(frequency_string);
-  std::string       token;
+  ss               = std::stringstream{frequency_string};
   while (getline(ss, token, ',')) {
     _frequencies.push_back(stoul(token));
   }
@@ -50,16 +57,16 @@ DVFSController::DVFSController(std::string_view participantName, bool withDvfs)
   S          = 0.05;
 
   std::string post_json = std::string("{\"") + std::string(_regionName) + std::string("\": {\"FREQUENCY\": ") + std::to_string(currentFrequency) + std::string("}}");
-  std::cout << "Example GET request to " << std::string("localhost:") << _port << std::endl;
-  auto r1 = _client->request("GET", "/get_region_stats");
-  std::cout << "Response content: " << r1->content.rdbuf() << std::endl;
-  try {
-    std::cout << "Example POST request to " << std::string("localhost:") << _port << std::endl;
-    std::cout << post_json << std::endl;
-    auto r2 = _client->request("POST", "/set_region_param", post_json);
-    std::cout << "Response content: " << r2->content.rdbuf() << std::endl;
-  } catch (const SimpleWeb::system_error &e) {
-    std::cerr << "Client request error: " << e.what() << std::endl;
+  for (auto &&_client : _clients) {
+    auto r1 = _client->request("GET", "/get_region_stats");
+    PRECICE_INFO("Response content: {}", r1->content.string());
+    try {
+      PRECICE_INFO("Request json: {}", post_json);
+      auto r2 = _client->request("POST", "/set_region_param", post_json);
+      PRECICE_INFO("Response content: {}", r2->content.string());
+    } catch (const SimpleWeb::system_error &e) {
+      PRECICE_ERROR("Client request error: {}", e.what());
+    }
   }
 }
 
@@ -88,14 +95,15 @@ void DVFSController::setNewFrequency()
   if (!_withDvfs)
     return;
   PRECICE_INFO("Setting new frequency {}", currentFrequency);
-  std::string post_json = std::string("{\"") + std::string(_regionName) + std::string("\": {\"FREQUENCY\": ") + std::to_string(currentFrequency) + std::string("}}");
-  try {
-    std::cout << "Example POST request to " << std::string("localhost:") << _port << std::endl;
-    std::cout << post_json << std::endl;
-    auto r2 = _client->request("POST", "/set_region_param", post_json);
-    std::cout << "Response content: " << r2->content.rdbuf() << std::endl;
-  } catch (const SimpleWeb::system_error &e) {
-    std::cerr << "Client request error: " << e.what() << std::endl;
+  for (auto &&_client : _clients) {
+    std::string post_json = std::string("{\"") + std::string(_regionName) + std::string("\": {\"FREQUENCY\": ") + std::to_string(currentFrequency) + std::string("}}");
+    try {
+      PRECICE_INFO("Request json: {}", post_json);
+      auto r2 = _client->request("POST", "/set_region_param", post_json);
+      PRECICE_INFO("Response content: {}", r2->content.string());
+    } catch (const SimpleWeb::system_error &e) {
+      PRECICE_ERROR("Client request error: {}", e.what());
+    }
   }
 }
 

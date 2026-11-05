@@ -22,20 +22,20 @@ public:
   void adjustResources(double imbalanceFactor);
 
 private:
-  mutable logging::Logger         _log{"impl::DVFSController"};
-  std::vector<unsigned>           _frequencies;
-  std::unordered_map<int, double> _upShift;
-  std::unordered_map<int, double> _downShift;
-  unsigned                        currentFrequency;
-  double                          _computeSlack(double imbalanceFactor);
-  double                          S;
-  double                          B;
-  double                          alpha;
-  bool                            _withDvfs;
-  std::string_view                _regionName;
-  std::string                     _port;
-  std::string_view                _ip;
-  std::unique_ptr<HttpClient>     _client;
+  mutable logging::Logger                  _log{"impl::DVFSController"};
+  std::vector<unsigned>                    _frequencies;
+  std::unordered_map<int, double>          _upShift;
+  std::unordered_map<int, double>          _downShift;
+  unsigned                                 currentFrequency;
+  double                                   _computeSlack(double imbalanceFactor);
+  double                                   S;
+  double                                   B;
+  double                                   alpha;
+  bool                                     _withDvfs;
+  std::string_view                         _regionName;
+  std::string                              _port;
+  std::string_view                         _ip;
+  std::vector<std::unique_ptr<HttpClient>> _clients;
 };
 
 } // namespace precice::impl
