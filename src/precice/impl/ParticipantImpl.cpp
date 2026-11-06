@@ -24,7 +24,7 @@
 #include "cplscheme/config/CouplingSchemeConfiguration.hpp"
 #include "io/Export.hpp"
 #include "io/ExportContext.hpp"
-#include "io/SharedPointer.hpp"
+#include "io/TXTTableWriter.hpp"
 #include "logging/LogConfiguration.hpp"
 #include "logging/LogMacros.hpp"
 #include "m2n/BoundM2N.hpp"
@@ -93,7 +93,8 @@ ParticipantImpl::ParticipantImpl(
     std::optional<void *> communicator)
     : _accessorName(participantName),
       _accessorProcessRank(solverProcessIndex),
-      _accessorCommunicatorSize(solverProcessSize)
+      _accessorCommunicatorSize(solverProcessSize),
+      _imbalanceWriter("precice-" + std::string(participantName) + "-imbalance.log")
 {
 
   PRECICE_CHECK(!_accessorName.empty(),
@@ -232,15 +233,20 @@ void ParticipantImpl::configure(
   config.configurePartitionsFor(_accessorName);
   _couplingScheme = config.getCouplingSchemeConfiguration()->getCouplingScheme(_accessorName);
 
-  _solverImbalance = std::make_shared<SolverImbalance>();
 #ifdef PRECICE_DVFS
   MERIC_Init();
   _outerRegionName = _accessorName + std::string("_outer");
   MERIC_MeasureStart(_outerRegionName.c_str());
-  if (_accessorProcessRank == 0) {
-    _dvfsController = std::make_unique<DVFSController>(_accessorName, _accessor->isDvfsEnabled());
-  }
 #endif
+
+  if (not utils::IntraComm::isSecondary()) {
+    _solverImbalance = std::make_shared<SolverImbalance>();
+    _solverImbalance->addLogEntries(_imbalanceWriter);
+#ifdef PRECICE_DVFS
+    _dvfsController = std::make_unique<DVFSController>(_accessorName, _accessor->isDvfsEnabled());
+    _dvfsController->addLogEntries(_imbalanceWriter);
+#endif
+  }
 
   PRECICE_ASSERT(_accessorCommunicatorSize == 1 || _accessor->useIntraComm(),
                  "A parallel participant needs an intra-participant communication");
@@ -504,11 +510,13 @@ void ParticipantImpl::advance(
     }
     _solverImbalance->computeSolverImbalance(timesToAdvance);
     _solverImbalance->reset();
+    if (not utils::IntraComm::isSecondary()) {
+      _solverImbalance->writeLogEntries(_imbalanceWriter);
 #ifdef PRECICE_DVFS
-    if (_accessorProcessRank == 0) {
       _dvfsController->adjustResources(_solverImbalance->getImbalanceFactor());
-    }
+      _dvfsController->writeLogEntries(_imbalanceWriter);
 #endif
+    }
   }
   _solverImbalance->startSolver();
 #ifdef PRECICE_DVFS

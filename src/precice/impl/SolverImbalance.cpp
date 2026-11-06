@@ -38,12 +38,12 @@ void SolverImbalance::computeSolverImbalance(const std::vector<double> &timesToA
   _imbalanceFactor         = *maxTimeToAdvance / _solverTimeToAdvance;
 }
 
-double SolverImbalance::getImbalance()
+double SolverImbalance::getImbalance() const
 {
   return _imbalance;
 }
 
-double SolverImbalance::getImbalanceFactor()
+double SolverImbalance::getImbalanceFactor() const
 {
   return _imbalanceFactor;
 }
@@ -53,6 +53,18 @@ void SolverImbalance::reset()
   PRECICE_DEBUG("resetting SolverImbalance");
   _simulatedTime     = 0.0;
   _solverAdvanceTime = 0.0;
+}
+
+void SolverImbalance::addLogEntries(io::TXTTableWriter &writer) const
+{
+  writer.addData("Imbalance", io::TXTTableWriter::DOUBLE);
+  writer.addData("Factor", io::TXTTableWriter::DOUBLE);
+}
+
+void SolverImbalance::writeLogEntries(io::TXTTableWriter &writer) const
+{
+  writer.writeData("Imbalance", getImbalance());
+  writer.writeData("Factor", getImbalanceFactor());
 }
 
 } // namespace precice::impl

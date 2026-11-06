@@ -114,4 +114,18 @@ double DVFSController::_computeSlack(double imbalanceFactor)
   return 1 - 1 / imbalanceFactor;
 }
 
+void DVFSController::addLogEntries(io::TXTTableWriter &writer) const
+{
+  if (not _withDvfs)
+    return;
+  writer.addData("Frequency", io::TXTTableWriter::DOUBLE);
+}
+
+void DVFSController::writeLogEntries(io::TXTTableWriter &writer) const
+{
+  if (not _withDvfs)
+    return;
+  writer.writeData("Frequency", currentFrequency * 1e-6);
+}
+
 } // namespace precice::impl

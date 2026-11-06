@@ -13,6 +13,7 @@
 #include "com/Communication.hpp"
 #include "cplscheme/CouplingScheme.hpp"
 #include "cplscheme/SharedPointer.hpp"
+#include "io/TXTTableWriter.hpp"
 #include "logging/Logger.hpp"
 #include "m2n/BoundM2N.hpp"
 #include "m2n/config/M2NConfiguration.hpp"
@@ -43,6 +44,10 @@ class CouplingSchemeConfiguration;
 namespace mesh {
 class Mesh;
 } // namespace mesh
+
+namespace io {
+class TXTTableWriter;
+} // namespace io
 
 namespace impl {
 
@@ -518,6 +523,7 @@ private:
 
   std::unique_ptr<profiling::Event> _solverInitEvent;
   std::unique_ptr<profiling::Event> _solverAdvanceEvent;
+  io::TXTTableWriter                _imbalanceWriter;
 
   std::deque<profiling::Event> _userEvents;
 };

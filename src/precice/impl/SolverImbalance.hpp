@@ -2,8 +2,13 @@
 
 #include <chrono>
 #include <vector>
+#include "io/TXTTableWriter.hpp"
+namespace precice {
 
-namespace precice::impl {
+namespace io {
+class TXTTableWriter;
+} // namespace io
+namespace impl {
 
 class SolverImbalance {
   using Clock = std::chrono::steady_clock;
@@ -15,8 +20,10 @@ public:
   void   stopSolver(double solverTimeStepSize);
   void   computeSolverImbalance(const std::vector<double> &timesToAdvance);
   void   reset();
-  double getImbalance();
-  double getImbalanceFactor();
+  double getImbalance() const;
+  double getImbalanceFactor() const;
+  void   addLogEntries(io::TXTTableWriter &writer) const;
+  void   writeLogEntries(io::TXTTableWriter &writer) const;
 
 private:
   mutable logging::Logger _log{"impl::SolverImbalance"};
@@ -35,4 +42,5 @@ private:
   State _state = State::STOPPED;
 };
 
-} // namespace precice::impl
+} // namespace impl
+} // namespace precice

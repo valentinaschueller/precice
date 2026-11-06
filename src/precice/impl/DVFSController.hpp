@@ -5,8 +5,15 @@
 #include <memory>
 #include <vector>
 #include "../thirdparty/simple-web-server/client_http.hpp"
+#include "io/TXTTableWriter.hpp"
 
-namespace precice::impl {
+namespace precice {
+
+namespace io {
+class TXTTableWriter;
+} // namespace io
+
+namespace impl {
 
 namespace asio = boost::asio;
 
@@ -20,6 +27,8 @@ public:
       bool             withDvfs);
   void setNewFrequency();
   void adjustResources(double imbalanceFactor);
+  void addLogEntries(io::TXTTableWriter &writer) const;
+  void writeLogEntries(io::TXTTableWriter &writer) const;
 
 private:
   mutable logging::Logger                  _log{"impl::DVFSController"};
@@ -38,4 +47,5 @@ private:
   std::vector<std::unique_ptr<HttpClient>> _clients;
 };
 
-} // namespace precice::impl
+} // namespace impl
+} // namespace precice
