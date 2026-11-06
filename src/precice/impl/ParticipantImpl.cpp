@@ -513,8 +513,8 @@ void ParticipantImpl::advance(
     if (not utils::IntraComm::isSecondary()) {
       _solverImbalance->writeLogEntries(_imbalanceWriter);
 #ifdef PRECICE_DVFS
-      _dvfsController->adjustResources(_solverImbalance->getActiveFraction());
       _dvfsController->writeLogEntries(_imbalanceWriter);
+      _dvfsController->adjustResources(_solverImbalance->getActiveFraction());
 #endif
     }
   }
