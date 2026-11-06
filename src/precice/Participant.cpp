@@ -273,12 +273,12 @@ void Participant::stopLastProfilingSection()
 
 double Participant::getSolverImbalance()
 {
-  return _impl->getSolverImbalance();
+  return 1 / _impl->getLoadBalance();
 }
 
 double Participant::getImbalanceFactor()
 {
-  return _impl->getImbalanceFactor();
+  return 1 / _impl->getActiveFraction();
 }
 
 } // namespace precice

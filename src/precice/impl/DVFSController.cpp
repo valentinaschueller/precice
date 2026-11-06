@@ -1,6 +1,6 @@
 #include "precice/impl/DVFSController.hpp"
-#include <bits/stdc++.h>
 #include <algorithm>
+#include <bits/stdc++.h>
 #include <iostream>
 #include <iterator>
 #include "../thirdparty/simple-web-server/client_http.hpp"
@@ -72,11 +72,11 @@ DVFSController::DVFSController(std::string_view participantName, bool withDvfs)
   }
 }
 
-void DVFSController::adjustResources(double imbalanceFactor)
+void DVFSController::adjustResources(double activeFraction)
 {
   if (!_withDvfs)
     return;
-  double slack   = _computeSlack(imbalanceFactor);
+  double slack   = _computeSlack(activeFraction);
   auto   f_index = std::find(_frequencies.begin(), _frequencies.end(), currentFrequency);
 
   if ((slack > S * _downShift[currentFrequency]) && (f_index != _frequencies.begin())) {
@@ -109,9 +109,9 @@ void DVFSController::setNewFrequency()
   }
 }
 
-double DVFSController::_computeSlack(double imbalanceFactor)
+double DVFSController::_computeSlack(double activeFraction)
 {
-  return 1 - 1 / imbalanceFactor;
+  return 1 - activeFraction;
 }
 
 void DVFSController::addLogEntries(io::TXTTableWriter &writer) const

@@ -312,9 +312,9 @@ public:
   /// Disable move assignment
   ParticipantImpl &operator=(ParticipantImpl &&) = delete;
 
-  double getSolverImbalance();
+  double getLoadBalance();
 
-  double getImbalanceFactor();
+  double getActiveFraction();
 
 private:
   mutable logging::Logger _log{"impl::ParticipantImpl"};

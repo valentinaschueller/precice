@@ -34,18 +34,18 @@ void SolverImbalance::computeSolverImbalance(const std::vector<double> &timesToA
   double meanTimeToAdvance = std::accumulate(timesToAdvance.begin(), timesToAdvance.end(), 0.0);
   meanTimeToAdvance        = meanTimeToAdvance / timesToAdvance.size();
   auto maxTimeToAdvance    = std::max_element(timesToAdvance.begin(), timesToAdvance.end());
-  _imbalance               = *maxTimeToAdvance / meanTimeToAdvance;
-  _imbalanceFactor         = *maxTimeToAdvance / _solverTimeToAdvance;
+  _loadBalance             = meanTimeToAdvance / *maxTimeToAdvance;
+  _activeFraction          = _solverTimeToAdvance / *maxTimeToAdvance;
 }
 
-double SolverImbalance::getImbalance() const
+double SolverImbalance::getLoadBalance() const
 {
-  return _imbalance;
+  return _loadBalance;
 }
 
-double SolverImbalance::getImbalanceFactor() const
+double SolverImbalance::getActiveFraction() const
 {
-  return _imbalanceFactor;
+  return _activeFraction;
 }
 
 void SolverImbalance::reset()
@@ -57,14 +57,14 @@ void SolverImbalance::reset()
 
 void SolverImbalance::addLogEntries(io::TXTTableWriter &writer) const
 {
-  writer.addData("Imbalance", io::TXTTableWriter::DOUBLE);
-  writer.addData("Factor", io::TXTTableWriter::DOUBLE);
+  writer.addData("Load Balance", io::TXTTableWriter::DOUBLE);
+  writer.addData("Active Fraction", io::TXTTableWriter::DOUBLE);
 }
 
 void SolverImbalance::writeLogEntries(io::TXTTableWriter &writer) const
 {
-  writer.writeData("Imbalance", getImbalance());
-  writer.writeData("Factor", getImbalanceFactor());
+  writer.writeData("Load Balance", getLoadBalance());
+  writer.writeData("Active Fraction", getActiveFraction());
 }
 
 } // namespace precice::impl

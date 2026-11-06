@@ -513,7 +513,7 @@ void ParticipantImpl::advance(
     if (not utils::IntraComm::isSecondary()) {
       _solverImbalance->writeLogEntries(_imbalanceWriter);
 #ifdef PRECICE_DVFS
-      _dvfsController->adjustResources(_solverImbalance->getImbalanceFactor());
+      _dvfsController->adjustResources(_solverImbalance->getActiveFraction());
       _dvfsController->writeLogEntries(_imbalanceWriter);
 #endif
     }
@@ -525,14 +525,14 @@ void ParticipantImpl::advance(
   _solverAdvanceEvent->start();
 }
 
-double ParticipantImpl::getImbalanceFactor()
+double ParticipantImpl::getActiveFraction()
 {
-  return _solverImbalance->getImbalanceFactor();
+  return _solverImbalance->getActiveFraction();
 }
 
-double ParticipantImpl::getSolverImbalance()
+double ParticipantImpl::getLoadBalance()
 {
-  return _solverImbalance->getImbalance();
+  return _solverImbalance->getLoadBalance();
 }
 
 void ParticipantImpl::handleDataBeforeAdvance(bool reachedTimeWindowEnd, double timeSteppedTo)

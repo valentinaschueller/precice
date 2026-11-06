@@ -20,8 +20,8 @@ public:
   void   stopSolver(double solverTimeStepSize);
   void   computeSolverImbalance(const std::vector<double> &timesToAdvance);
   void   reset();
-  double getImbalance() const;
-  double getImbalanceFactor() const;
+  double getLoadBalance() const;
+  double getActiveFraction() const;
   void   addLogEntries(io::TXTTableWriter &writer) const;
   void   writeLogEntries(io::TXTTableWriter &writer) const;
 
@@ -31,8 +31,8 @@ private:
   double                  _simulatedTime     = 0.0;
   Clock::time_point       _startTime;
   double                  _solverTimeToAdvance;
-  double                  _imbalance;
-  double                  _imbalanceFactor;
+  double                  _loadBalance;
+  double                  _activeFraction;
 
   enum class State : bool {
     STOPPED = false,
