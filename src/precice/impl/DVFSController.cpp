@@ -34,7 +34,7 @@ DVFSController::DVFSController(std::string_view participantName, bool withDvfs)
   std::stringstream ss(nodes);
   std::string       token;
 
-  while (getline(ss, token, ' ')) {
+  while (getline(ss, token, '\n')) {
     _clients.push_back(std::make_unique<HttpClient>(token + ":" + _port));
     PRECICE_INFO("IP Address: {}", token);
   }
