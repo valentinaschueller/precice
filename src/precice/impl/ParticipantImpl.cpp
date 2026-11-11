@@ -239,8 +239,8 @@ void ParticipantImpl::configure(
   MERIC_MeasureStart(_outerRegionName.c_str());
 #endif
 
+  _solverImbalance = std::make_shared<SolverImbalance>();
   if (not utils::IntraComm::isSecondary()) {
-    _solverImbalance = std::make_shared<SolverImbalance>();
     _solverImbalance->addLogEntries(_imbalanceWriter);
 #ifdef PRECICE_DVFS
     _dvfsController = std::make_unique<DVFSController>(_accessorName, _accessor->isDvfsEnabled());
