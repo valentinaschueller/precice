@@ -235,8 +235,6 @@ void ParticipantImpl::configure(
 
 #ifdef PRECICE_DVFS
   MERIC_Init();
-  _outerRegionName = _accessorName + std::string("_outer");
-  MERIC_MeasureStart(_outerRegionName.c_str());
 #endif
 
   _solverImbalance = std::make_shared<SolverImbalance>();
@@ -658,7 +656,6 @@ void ParticipantImpl::finalize()
 {
 #ifdef PRECICE_DVFS
   MERIC_MeasureStop(_accessorName.c_str());
-  MERIC_MeasureStop(_outerRegionName.c_str());
   MERIC_Close();
 #endif
   PRECICE_TRACE();

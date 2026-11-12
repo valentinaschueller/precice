@@ -320,7 +320,6 @@ private:
   mutable logging::Logger _log{"impl::ParticipantImpl"};
 
   std::string _accessorName;
-  std::string _outerRegionName;
 
   int _accessorProcessRank;
 
