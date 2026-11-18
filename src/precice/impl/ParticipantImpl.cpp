@@ -93,8 +93,7 @@ ParticipantImpl::ParticipantImpl(
     std::optional<void *> communicator)
     : _accessorName(participantName),
       _accessorProcessRank(solverProcessIndex),
-      _accessorCommunicatorSize(solverProcessSize),
-      _imbalanceWriter("precice-" + std::string(participantName) + "-imbalance.log")
+      _accessorCommunicatorSize(solverProcessSize)
 {
 
   PRECICE_CHECK(!_accessorName.empty(),
@@ -133,6 +132,9 @@ ParticipantImpl::ParticipantImpl(
   } else {
     utils::Parallel::initializeOrDetectMPI();
   }
+#ifdef PRECICE_DVFS
+  MERIC_Init();
+#endif
 
   {
     const auto currentRank = utils::Parallel::current()->rank();
@@ -165,6 +167,20 @@ ParticipantImpl::ParticipantImpl(
 
   e.stop();
   _solverInitEvent = std::make_unique<profiling::Event>("solver.initialize", profiling::Fundamental, profiling::Synchronize);
+
+  _solverImbalance = std::make_shared<SolverImbalance>();
+  if (not utils::IntraComm::isSecondary()) {
+      _imbalanceWriter = std::make_shared<io::TXTTableWriter>("precice-" + _accessorName + "-imbalance.log"); 
+      _solverImbalance->addLogEntries(*_imbalanceWriter);
+#ifdef PRECICE_DVFS
+    _dvfsController = std::make_unique<DVFSController>(_accessorName, _accessor->isDvfsEnabled());
+    _dvfsController->addLogEntries(*_imbalanceWriter);
+#endif
+    }
+#ifdef PRECICE_DVFS
+  _outerRegionName = _accessorName + std::string("_outer");
+  MERIC_MeasureStart(_outerRegionName.c_str());
+#endif
 }
 
 ParticipantImpl::~ParticipantImpl()
@@ -232,21 +248,6 @@ void ParticipantImpl::configure(
   _m2ns               = config.getBoundM2NsFor(_accessorName);
   config.configurePartitionsFor(_accessorName);
   _couplingScheme = config.getCouplingSchemeConfiguration()->getCouplingScheme(_accessorName);
-
-#ifdef PRECICE_DVFS
-  MERIC_Init();
-  _outerRegionName = _accessorName + std::string("_outer");
-  MERIC_MeasureStart(_outerRegionName.c_str());
-#endif
-
-  _solverImbalance = std::make_shared<SolverImbalance>();
-  if (not utils::IntraComm::isSecondary()) {
-    _solverImbalance->addLogEntries(_imbalanceWriter);
-#ifdef PRECICE_DVFS
-    _dvfsController = std::make_unique<DVFSController>(_accessorName, _accessor->isDvfsEnabled());
-    _dvfsController->addLogEntries(_imbalanceWriter);
-#endif
-  }
 
   PRECICE_ASSERT(_accessorCommunicatorSize == 1 || _accessor->useIntraComm(),
                  "A parallel participant needs an intra-participant communication");
@@ -511,9 +512,9 @@ void ParticipantImpl::advance(
     _solverImbalance->computeSolverImbalance(timesToAdvance);
     _solverImbalance->reset();
     if (not utils::IntraComm::isSecondary()) {
-      _solverImbalance->writeLogEntries(_imbalanceWriter);
+      _solverImbalance->writeLogEntries(*_imbalanceWriter);
 #ifdef PRECICE_DVFS
-      _dvfsController->writeLogEntries(_imbalanceWriter);
+      _dvfsController->writeLogEntries(*_imbalanceWriter);
       _dvfsController->adjustResources(_solverImbalance->getActiveFraction());
 #endif
     }
@@ -659,7 +660,6 @@ void ParticipantImpl::finalize()
 #ifdef PRECICE_DVFS
   MERIC_MeasureStop(_accessorName.c_str());
   MERIC_MeasureStop(_outerRegionName.c_str());
-  MERIC_Close();
 #endif
   PRECICE_TRACE();
   PRECICE_CHECK(_state != State::Finalized, "finalize() may only be called once.");
@@ -670,7 +670,12 @@ void ParticipantImpl::finalize()
     _userEvents.pop_back();
   }
   _solverAdvanceEvent.reset();
+  _solverImbalance->reset();
 
+  if (not utils::IntraComm::isSecondary()) {
+    _imbalanceWriter->close();
+  }
+  
   Event e("finalize", profiling::Fundamental);
 
   if (_state == State::Initialized) {
@@ -706,6 +711,9 @@ void ParticipantImpl::finalize()
 #endif
   profiling::EventRegistry::instance().finalize();
 
+#ifdef PRECICE_DVFS
+  MERIC_Close();
+#endif
   // Finally clear events and finalize MPI
   utils::Parallel::finalizeOrCleanupMPI();
   _state = State::Finalized;

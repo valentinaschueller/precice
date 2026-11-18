@@ -523,7 +523,7 @@ private:
 
   std::unique_ptr<profiling::Event> _solverInitEvent;
   std::unique_ptr<profiling::Event> _solverAdvanceEvent;
-  io::TXTTableWriter                _imbalanceWriter;
+  std::shared_ptr<io::TXTTableWriter> _imbalanceWriter;
 
   std::deque<profiling::Event> _userEvents;
 };
